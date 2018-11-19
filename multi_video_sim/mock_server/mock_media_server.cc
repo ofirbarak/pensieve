@@ -36,12 +36,8 @@ int main () {
         }
         cout << read_data << endl;
 
-        auto end = std::chrono::system_clock::now();
-        double elapsed_seconds = std::chrono::duration_cast<
-                                 std::chrono::duration<double> >(end - start).count();
-        cout << "IPC total time: " << elapsed_seconds << endl;
         std::this_thread::sleep_for(std::chrono::seconds(2)); //simulate real media server doing other stuff
-        start = std::chrono::system_clock::now();
+
         //RESPOND
         json j;
         j["delay"] = 3.99182; // ms
