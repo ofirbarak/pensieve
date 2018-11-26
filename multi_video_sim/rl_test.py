@@ -101,7 +101,6 @@ def main():
         video_num_chunks = 43200; # 24 hours of video. Is this an acceptable proxy for never ending video?
 
         puffer_sock = start_ipc_client()
-        puffer_sock.sendall("Pensieve ready")
 
         while True:  # serve video forever
             # the action is from the last decision
