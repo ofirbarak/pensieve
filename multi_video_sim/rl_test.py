@@ -35,7 +35,11 @@ def start_ipc_client():
 
 def get_puffer_info(sock):
     json_len = sock.recv(2)
-    json_len_num = struct.unpack("!H", json_len)[0]
+    try:
+        json_len_num = struct.unpack("!H", json_len)[0]
+    except Exception: #TODO this should confirm the exception is due to length error
+        print "Failed to decode info from Puffer"
+        return 0, 0, 0, 0, 0
     json_data = sock.recv(json_len_num)
     puffer_info = json.loads(json_data)
     delay = puffer_info['delay'];
@@ -129,6 +133,9 @@ def main():
 
             # dequeue history record
             state = np.roll(state, -1, axis=1)
+
+            if delay == 0: #No division by zero
+                delay = 1
 
             # this should be S_INFO number of terms
             state[0, -1] = VIDEO_BIT_RATE[action] / float(np.max(VIDEO_BIT_RATE))  # last quality
