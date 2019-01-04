@@ -24,7 +24,7 @@ RANDOM_SEED = 42
 RAND_RANGE = 1000
 NN_MODEL = sys.argv[1]
 SERVER_ADDRESS = '/tmp/pensieve'
-AVG_AUDIO_SIZE = 64; # Approx 64 Kb of audio sent every 2 seconds, add this to video chunks
+AVG_AUDIO_SIZE_MB = 0.008; # Approx 64 Kb of audio sent every 2 seconds, add this to video chunks
 
 
 def start_ipc_client():
@@ -37,9 +37,10 @@ def get_puffer_info(sock):
     json_len = sock.recv(2)
     try:
         json_len_num = struct.unpack("!H", json_len)[0]
-    except Exception: #TODO this should confirm the exception is due to length error
-        print "Failed to decode info from Puffer"
-        return 0, 0, 0, 0, 0
+    except Exception:
+        print "Failed to decode info from Puffer over IPC"
+        sys.exit()
+        #return 0, 0, 0, 0, 0
     json_data = sock.recv(json_len_num)
     puffer_info = json.loads(json_data)
     delay = puffer_info['delay'];
@@ -52,7 +53,12 @@ def get_puffer_info(sock):
 
 
 def send_puffer_next_action(sock, bit_rate):
-    err = sock.sendall(str(bit_rate))
+    bit_rate_dict = {}
+    bit_rate_dict['bit_rate'] = bit_rate
+    bit_rate_json = json.dumps(bit_rate_dict)
+    json_len = struct.pack("!H", len(bit_rate_json))
+    err = sock.sendall(json_len + bit_rate_json)
+    #err = sock.sendall(str(bit_rate))
     return err
 
 
@@ -72,7 +78,7 @@ def main():
     assert len(VIDEO_BIT_RATE) == A_DIM
 
     # Originally defined in env.py
-    mask = [1,1,1,1,1,1,1,0,1,0] # TODO: Make me a variable dependent on channel
+    mask = [1,1,1,1,1,1,1,1,1,1] # TODO: Make me a variable dependent on channel
     with tf.Session() as sess:
 
         actor = a3c.ActorNetwork(sess,
@@ -124,6 +130,14 @@ def main():
 
             last_bit_rate = bit_rate
             last_action = action
+
+            # Add average audio size to each video chunk to improve throughput estimates
+            # This is necessary because original Pensieve code does not consider audio, and
+            # no simple solution exists given that our audio and video chunks are different
+            # time scales.
+            video_chunk_size += AVG_AUDIO_SIZE_MB
+            for idx in xrange(len(next_video_chunk_size)):
+                next_video_chunk_size[idx] = next_video_chunk_size[idx] + AVG_AUDIO_SIZE_MB
 
             # retrieve previous state
             if len(s_batch) == 0:
