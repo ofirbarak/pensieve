@@ -24,7 +24,7 @@ RANDOM_SEED = 42
 RAND_RANGE = 1000
 NN_MODEL = sys.argv[1]
 SERVER_ADDRESS = '/tmp/pensieve'
-AVG_AUDIO_SIZE_MB = 0.008; # Approx 64 Kb of audio sent every 2 seconds, add this to video chunks
+AVG_AUDIO_SIZE_BYTES = 8000; # Approx 64 Kb of audio sent every 2 seconds, add this to video chunks
 
 
 def start_ipc_client():
@@ -135,9 +135,9 @@ def main():
             # This is necessary because original Pensieve code does not consider audio, and
             # no simple solution exists given that our audio and video chunks are different
             # time scales.
-            video_chunk_size += AVG_AUDIO_SIZE_MB
+            video_chunk_size += AVG_AUDIO_SIZE_BYTES
             for idx in xrange(len(next_video_chunk_size)):
-                next_video_chunk_size[idx] = next_video_chunk_size[idx] + AVG_AUDIO_SIZE_MB
+                next_video_chunk_size[idx] = next_video_chunk_size[idx] + AVG_AUDIO_SIZE_BYTES
 
             # retrieve previous state
             if len(s_batch) == 0:
