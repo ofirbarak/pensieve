@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 import os
 import json
 import sys
@@ -23,7 +25,7 @@ DEFAULT_QUALITY = 1  # default video quality without agent
 RANDOM_SEED = 42
 RAND_RANGE = 1000
 NN_MODEL = sys.argv[1]
-SERVER_ADDRESS = '/tmp/pensieve'
+SERVER_ADDRESS = sys.argv[2]
 AVG_AUDIO_SIZE_BYTES = 8000; # Approx 64 Kb of audio sent every 2 seconds, add this to video chunks
 
 
@@ -34,14 +36,14 @@ def start_ipc_client():
 
 
 def get_puffer_info(sock):
-    json_len = sock.recv(2)
+    json_len = sock.recv(2, socket.MSG_WAITALL)
     try:
         json_len_num = struct.unpack("!H", json_len)[0]
     except Exception:
         print "Failed to decode info from Puffer over IPC"
-        sys.exit()
+        sys.exit(1)
         #return 0, 0, 0, 0, 0
-    json_data = sock.recv(json_len_num)
+    json_data = sock.recv(json_len_num, socket.MSG_WAITALL)
     puffer_info = json.loads(json_data)
     delay = puffer_info['delay'];
     playback_buf = puffer_info['playback_buf'];
