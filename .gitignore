@@ -1,3 +1,13 @@
 *.deb
 selenium-2.39.0
-
+*.pyc
+videos/
+video_size*
+cooked_*/
+test_results/
+test_video/
+results/
+err_log.txt
+models
+cooked_test_traces
+cooked_traces

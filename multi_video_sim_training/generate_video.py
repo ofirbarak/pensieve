@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 RANDOM_SEED = 42
@@ -13,6 +14,9 @@ MIN_NUM_CHUNKS = 20
 MEAN_VIDEO_SIZE = [0.1, 0.15, 0.38, 0.6, 0.93, 1.43, 2.15, 3.25, 4.5, 6]  # MB
 STD_VIDEO_SIZE_NOISE = 0.1
 VIDEO_FOLDER = './videos/'
+
+if not os.path.exists(VIDEO_FOLDER):
+	os.makedirs(VIDEO_FOLDER)
 
 
 np.random.seed(RANDOM_SEED)

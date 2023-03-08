@@ -10,7 +10,8 @@ BITRATE_LEVELS = 6
 MASK = [0, 1, 0, 1, 1, 1, 1, 1, 0, 0]
 M_IN_B = 1000000.0
 
-
+if not os.path.exists(VIDEO_OUTPUT_FOLDER):
+	os.makedirs(VIDEO_OUTPUT_FOLDER)
 
 video_chunk_sizes = []
 

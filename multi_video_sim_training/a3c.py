@@ -9,6 +9,7 @@ ENTROPY_EPS = 1e-6
 EPS = 1e-6
 MAX_BR_LEVELS = 10
 MASK_DIM = 6
+ENTROPY_WEIGHT= float(os.environ['ENTROPY_WEIGHT']) if 'ENTROPY_WEIGHT' in os.environ else 0.5
 
 
 class ActorNetwork(object):
@@ -51,8 +52,7 @@ class ActorNetwork(object):
         self.act_grad_weights = tf.placeholder(tf.float32, [None, 1])
 
         # Compute the objective (log action_vector and entropy)
-	ENTROPY_WEIGHT = float(os.environ['ENTROPY_WEIGHT'])
-	print ("ACTOR NETWORK ENTROPY WEIGHT: " + str(ENTROPY_WEIGHT))
+        print("ACTOR NETWORK ENTROPY WEIGHT: " + str(ENTROPY_WEIGHT))
         self.obj = tf.reduce_sum(tf.multiply(
                        tf.log(tf.reduce_sum(tf.multiply(self.out, self.acts),
                                             reduction_indices=1, keep_dims=True)),

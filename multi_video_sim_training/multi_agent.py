@@ -30,9 +30,10 @@ SUMMARY_DIR = './results'
 LOG_FILE = './results/log'
 TEST_LOG_FOLDER = './test_results/'
 TRAIN_TRACES = './cooked_traces/'
-NN_MODEL = os.environ['last_model']
-# NN_MODEL = None
+NN_MODEL = os.environ['last_model'] if 'last_model' in os.environ else None
 
+if not os.path.exists(MODEL_DIR):
+    os.makedirs(MODEL_DIR)
 
 # for multi-video setting,
 # "bit_rate" is the action *after* masking
@@ -127,10 +128,9 @@ def central_agent(net_params_queues, exp_queues):
 
         # restore neural net parameters
         nn_model = NN_MODEL
-	if nn_model == "None":
+        if nn_model is None or nn_model == 'None':
             epoch = 0
-	    nn_model = None
-        if nn_model is not None:  # nn_model is the path to file
+        else:  # nn_model is the path to file
             epoch = int(nn_model.replace("nn_model_ep_", "").split(".ckpt")[0])
             saver.restore(sess, MODEL_DIR + nn_model)
             print("Model restored.")

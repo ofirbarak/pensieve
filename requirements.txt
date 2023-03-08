@@ -1,0 +1,5 @@
+numpy
+matplotlib
+psutil
+tensorflow==1.1.0
+tflearn==0.3.1
