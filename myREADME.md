@@ -4,7 +4,7 @@
 
 ## Train new model - multi video variation
 1. `cd multi_video_sim_training`
-2. `python generate_video.py`
+2. `python generate_video.py` and `python generate_test_video.py`
 3. Place traces in `cooked_test_traces` and `cooked_traces` (using a script from the repo 'traces' that converts to pensieve format)
 4. run `python multi_agent_entropy.py` (decresing entropy version like the paper), or const entropy with `python multi_agent.py`
 5. Monitor training: `python -m tensorflow.tensorboard --logdir=./multi_video_sim_training/results/` (view in `localhost:6006`)
