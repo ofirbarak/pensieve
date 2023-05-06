@@ -37,7 +37,7 @@ def run():
 			os.environ['last_model']='nn_model_ep_' + str(last_itr_num) + '.ckpt'
 
 		command = 'exec python ./multi_agent.py'
-		proc = subprocess.Popen(command, shell=True, stderr=err_log)
+		proc = subprocess.Popen(command, shell=True)
 		sleep(3600)
 		kill(proc.pid)
 

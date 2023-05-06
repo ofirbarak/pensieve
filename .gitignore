@@ -11,3 +11,4 @@ err_log.txt
 models
 cooked_test_traces
 cooked_traces
+run_exp/chrome_retry_log
