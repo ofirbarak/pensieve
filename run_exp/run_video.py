@@ -2,105 +2,88 @@ import os
 import sys
 import signal
 import subprocess
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException
+from selenium.webdriver import Chrome, ChromeOptions
+from selenium.webdriver.chrome.service import Service
 from pyvirtualdisplay import Display
 from time import sleep
 
-# TO RUN: download https://pypi.python.org/packages/source/s/selenium/selenium-2.39.0.tar.gz
-# run sudo apt-get install python-setuptools
-# run sudo apt-get install xvfb
-# after untar, run sudo python setup.py install
-# follow directions here: https://pypi.python.org/pypi/PyVirtualDisplay to install pyvirtualdisplay
-
-# For chrome, need chrome driver: https://code.google.com/p/selenium/wiki/ChromeDriver
-# chromedriver variable should be path to the chromedriver
-# the default location for firefox is /usr/bin/firefox and chrome binary is /usr/bin/google-chrome
-# if they are at those locations, don't need to specify
+IP = "192.168.1.132"  # hostname -I
+RUN_TIME_IN_SEC = 320
+PROJECT_BASE_DIR = os.getcwd()
 
 
-def timeout_handler(signum, frame):
-	raise Exception("Timeout")
+def run_abr_server(abr_algo, trace_file):
+    if abr_algo == "TEST":
+        command = f'exec python {os.path.join(PROJECT_BASE_DIR, "rl_server/test_server.py")} {trace_file}'
+    elif abr_algo == "RL":
+        command = (
+            "exec /usr/bin/python ../rl_server/rl_server_no_training.py " + trace_file
+        )
+    elif abr_algo == "fastMPC":
+        command = "exec /usr/bin/python ../rl_server/mpc_server.py " + trace_file
+    elif abr_algo == "robustMPC":
+        command = "exec /usr/bin/python ../rl_server/robust_mpc_server.py " + trace_file
+    else:
+        command = (
+            "exec python ../rl_server/simple_server.py " + abr_algo + " " + trace_file
+        )
 
-ip = sys.argv[1]
-abr_algo = sys.argv[2]
-run_time = int(sys.argv[3])
-process_id = sys.argv[4]
-trace_file = sys.argv[5]
-sleep_time = sys.argv[6]
-	
-# prevent multiple process from being synchronized
-sleep(int(sleep_time))
-	
-# generate url
-url = 'http://' + ip + '/' + 'myindex_' + abr_algo + '.html'
+    return subprocess.Popen(command, shell=True)
 
-# timeout signal
-signal.signal(signal.SIGALRM, timeout_handler)
-signal.alarm(run_time + 30)
-	
-try:
-	# copy over the chrome user dir
-	default_chrome_user_dir = '../abr_browser_dir/chrome_data_dir'
-	chrome_user_dir = '/tmp/chrome_user_dir_id_' + process_id
-	os.system('rm -r ' + chrome_user_dir)
-	os.system('cp -r ' + default_chrome_user_dir + ' ' + chrome_user_dir)
-	
-	# start abr algorithm server
-	if abr_algo == 'RL':
-		command = 'exec /usr/bin/python ../rl_server/rl_server_no_training.py ' + trace_file
-	elif abr_algo == 'fastMPC':
-		command = 'exec /usr/bin/python ../rl_server/mpc_server.py ' + trace_file
-	elif abr_algo == 'robustMPC':
-		command = 'exec /usr/bin/python ../rl_server/robust_mpc_server.py ' + trace_file
-	else:
-		command = 'exec /usr/bin/python ../rl_server/simple_server.py ' + abr_algo + ' ' + trace_file
-	
-	proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-	sleep(2)
-	
-	# to not display the page in browser
-	display = Display(visible=0, size=(800,600))
-	display.start()
-	
-	# initialize chrome driver
-	options=Options()
-	chrome_driver = '../abr_browser_dir/chromedriver'
-	options.add_argument('--user-data-dir=' + chrome_user_dir)
-	options.add_argument('--ignore-certificate-errors')
-	driver=webdriver.Chrome(chrome_driver, chrome_options=options)
-	
-	# run chrome
-	driver.set_page_load_timeout(10)
-	driver.get(url)
-	
-	sleep(run_time)
-	
-	driver.quit()
-	display.stop()
-	
-	# kill abr algorithm server
-	proc.send_signal(signal.SIGINT)
-	# proc.kill()
-	
-	print 'done'
-	
-except Exception as e:
-	try: 
-		display.stop()
-	except:
-		pass
-	try:
-		driver.quit()
-	except:
-		pass
-	try:
-		proc.send_signal(signal.SIGINT)
-	except:
-		pass
-	
-	print e	
 
+def get_driver(abr_algo):
+    default_chrome_user_dir = os.path.join(
+        PROJECT_BASE_DIR, "abr_browser_dir/chrome_data_dir"
+    )
+    chrome_user_dir = "/tmp/chrome_user_dir_id_" + abr_algo
+    os.system("rm -r " + chrome_user_dir)
+    os.system("cp -r " + default_chrome_user_dir + " " + chrome_user_dir)
+
+    options = ChromeOptions()
+    options.add_argument("--user-data-dir=" + chrome_user_dir)
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--window-size=800x600")
+    options.add_argument("--headless")
+
+    chrome_driver_path = os.path.join(
+        PROJECT_BASE_DIR, "chromedriver-linux64/chromedriver"
+    )
+    service = Service(executable_path=chrome_driver_path)
+
+    driver = Chrome(service=service, options=options)
+
+    return driver
+
+
+def run_video(driver: Chrome, abr_algo):
+    driver.set_page_load_timeout(10)
+
+    # RL in url because it implements cilent-server as we want
+    url = "http://" + IP + "/" + "myindex_" + "RL" + ".html"
+
+    driver.get(url)
+    sleep(RUN_TIME_IN_SEC)
+
+
+def main():
+    abr_server_proc = None
+    driver = None
+
+    try:
+        abr_algo = sys.argv[1]
+        trace_file = sys.argv[2]
+
+        abr_server_proc = run_abr_server(abr_algo, trace_file)
+        sleep(2)
+        driver = get_driver(abr_algo)
+
+        run_video(driver, abr_algo)
+    finally:
+        if driver is not None:
+            driver.quit()
+        if abr_server_proc is not None:
+            abr_server_proc.send_signal(signal.SIGINT)
+
+
+if __name__ == "__main__":
+    main()
